@@ -1,0 +1,176 @@
+/* ==========================================================
+   Estilos Personalizados - Blog de Historias de MarseSan
+   ========================================================== */
+
+/* --- 1. TIPOGRAFÍA Y FUENTES --- */
+
+/* Tipografía Artística (Caveat) para la Interfaz */
+.cursiva {
+  font-family: 'Caveat', cursive;
+  font-size: 1.85rem;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-cursiva {
+  font-family: 'Caveat', cursive;
+  font-size: 1.35rem;
+  letter-spacing: 0.5px;
+}
+
+.font-artistic {
+  font-family: 'Caveat', cursive;
+}
+
+/* Tipografía Serif (Lora) para Lectura y Redacción de Historias */
+.story-content,
+.ql-editor {
+  font-family: 'Lora', Georgia, serif !important;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #e0e0e0;
+}
+
+/* --- 2. FONDOS TEMÁTICOS (GALAXIA) --- */
+
+/* Barra de navegación superior */
+.galaxy {
+  background-image: url('../FondoPerfil/Galaxia1.jpg');
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Menú lateral (Sidebar de Universos) */
+.sidebar-galaxy {
+  background-image: url('../FondoPerfil/Galaxia2.jpeg');
+  background-size: cover;
+  background-position: left center;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fondo principal del catálogo */
+.dark-galaxy {
+  background-color: #050508;
+  background-image: url('../FondoPerfil/Galaxia3.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* --- 3. FOTO DE PERFIL CIRCULAR --- */
+
+/* Ajustado exactamente a 32px x 32px como en la Galería */
+.perfil {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.perfil:hover {
+  border-color: #ffc107 !important; /* Resaltado dorado al pasar el ratón */
+  transform: scale(1.05);
+}
+
+/* --- 4. TARJETAS DE HISTORIAS Y EFECTOS --- */
+
+.card-hover {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* --- 5. PERSONALIZACIÓN DEL EDITOR DE TEXTO (QUILL JS) --- */
+
+#editor-container {
+  background-color: #121526;
+  color: #ffffff;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.ql-toolbar.ql-snow {
+  background-color: #1b1e36;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Color claro para iconos y selectores de la barra del editor */
+.ql-snowflake, .ql-stroke {
+  stroke: #e0e0e0 !important;
+}
+.ql-fill {
+  fill: #e0e0e0 !important;
+}
+.ql-picker-label {
+  color: #e0e0e0 !important;
+}
+
+/* --- 6. PROTECCIÓN Y SELECCIÓN DE TEXTO --- */
+
+.unselectable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* --- 7. ADAPTABILIDAD RESPONSIVA (MÓVIL / ESCRITORIO) --- */
+
+/* Pantallas de Escritorio (Laptops / Monitor) */
+@media (min-width: 768px) {
+  .sidebar-galaxy,
+  .sidebar {
+    min-height: calc(100vh - 70px);
+  }
+
+  .sidebar-content-container {
+    top: 20px;
+    z-index: 10;
+    min-height: calc(100vh - 100px);
+  }
+}
+
+/* Pantallas Pequeñas (Celulares) */
+@media (max-width: 767.98px) {
+  .sidebar-galaxy,
+  .sidebar {
+    min-height: auto !important;
+  }
+
+  .sidebar-content-container {
+    min-height: auto !important;
+  }
+
+  /* Barra de botones de universos con scroll horizontal */
+  .filter-scroll-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 6px;
+  }
+
+  .filter-scroll-container::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .filter-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+  }
+}
+
+.h6-small {
+  font-size: 0.75rem !important;
+}
+
+.nav-small {
+  font-size: 1.35rem !important;
+}
