@@ -3,7 +3,7 @@
   "name": "Historias de MarseSan",
   "icons": [
     {
-      "src": "../Fondo y Perfil/Perfil.jpeg",
+      "src": "../Fondo y Perfil/Perfil.png",
       "type": "image/jpeg",
       "sizes": "512x512",
       "purpose": "any maskable"
