@@ -11,6 +11,31 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchAndFilters();
 });
 
+/* --- FORMATER FECHAS DE FIRESTORE --- */
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+
+  try {
+    if (typeof dateValue.toDate === 'function') {
+      return dateValue.toDate().toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } else if (dateValue.seconds) {
+      return new Date(dateValue.seconds * 1000).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+  } catch (e) {
+    console.warn("Error formateando fecha:", e);
+  }
+
+  return dateValue;
+}
+
 /* --- ACCESO OCULTO A MODO ADMINISTRADOR (3 Clics rápidos) --- */
 function initProfileTrigger() {
   const profileImg = document.getElementById('profileTrigger');
@@ -35,7 +60,6 @@ async function loadData() {
   if (!grid) return;
 
   try {
-    // 1. Cargar historias desde Firestore
     const querySnapshot = await getDocs(collection(db, "historias"));
     storiesData = [];
     
@@ -43,10 +67,7 @@ async function loadData() {
       storiesData.push({ id: doc.id, ...doc.data() });
     });
 
-    // 2. Cargar universos
     await loadUniverses();
-
-    // 3. Renderizar historias
     renderGrid(storiesData);
 
   } catch (error) {
@@ -72,7 +93,6 @@ async function loadUniverses() {
     console.warn("No se pudo leer la colección de universos directa:", error);
   }
 
-  // Respaldo: Si la colección universos está vacía, los toma de las historias
   if (universosNombres.length === 0 && storiesData.length > 0) {
     universosNombres = [...new Set(storiesData.map(s => s.universo).filter(Boolean))];
   }
@@ -109,6 +129,9 @@ function renderGrid(stories) {
     tempDiv.innerHTML = story.contenido || '';
     const plainText = tempDiv.textContent || tempDiv.innerText || '';
     const previewText = story.resumen || (plainText.substring(0, 120) + (plainText.length > 120 ? '...' : ''));
+    
+    // Formatear la fecha procesada
+    const fechaFormateada = formatDate(story.fecha);
 
     return `
       <div class="col-12 col-md-6 col-lg-4 story-card">
@@ -116,7 +139,7 @@ function renderGrid(stories) {
           <div class="card-body d-flex flex-column">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-secondary font-artistic">${story.universo || 'Independiente'}</span>
-              <small class="text-white-50">${story.fecha || ''}</small>
+              <small class="text-white-50">${fechaFormateada}</small>
             </div>
             <h5 class="card-title font-artistic text-white fs-4">${story.titulo || 'Sin título'}</h5>
             <p class="card-text text-white-50 small flex-grow-1">${previewText}</p>
