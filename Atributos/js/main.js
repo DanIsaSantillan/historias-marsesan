@@ -25,11 +25,11 @@ function initProfileTrigger() {
       clickCount = 0;
     }, 1200);
 
-    // Redirección corregida para GitHub Pages
+    // Ruta exacta según la estructura de carpetas de tu proyecto:
     if (clickCount >= 3) {
       clickCount = 0;
       clearTimeout(clickTimer);
-      window.location.href = 'admin/index.html';
+      window.location.href = 'Atributos/admin/index.html';
     }
   });
 }
