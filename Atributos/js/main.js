@@ -25,11 +25,11 @@ function initProfileTrigger() {
       clickCount = 0;
     }, 1200);
 
-    // Al llegar a los 3 clics abre el panel de administración
+    // Redirección corregida para GitHub Pages
     if (clickCount >= 3) {
       clickCount = 0;
       clearTimeout(clickTimer);
-      window.location.href = './admin/index.html';
+      window.location.href = 'admin/index.html';
     }
   });
 }
