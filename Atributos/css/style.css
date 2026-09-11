@@ -184,3 +184,8 @@
     border-radius: 4px;
   }
 }
+
+.ql-editor *, #readerContent * {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
