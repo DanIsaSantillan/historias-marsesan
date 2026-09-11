@@ -172,12 +172,12 @@ function renderizarGridAdmin() {
       <div class="card bg-dark text-white border-secondary card-hover h-100">
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="badge bg-warning text-dark font-artistic">${story.universo || 'Sin categoría'}</span>
+            <span class="badge bg-outline-light text-light font-artistic">${story.universo || 'Sin categoría'}</span>
             <small class="text-white-50" style="font-size: 0.75rem;">${story.fechaFormateada || ''}</small>
           </div>
-          <h5 class="card-title font-artistic text-warning fs-4">${story.titulo || 'Sin título'}</h5>
+          <h5 class="card-title font-artistic text-light fs-4">${story.titulo || 'Sin título'}</h5>
           <p class="card-text text-white-50 small flex-grow-1">${story.resumen || ''}</p>
-          <button class="btn btn-sm btn-outline-warning font-artistic mt-3 w-100 btn-edit-story" data-id="${story.id}">
+          <button class="btn btn-sm btn-outline-light font-artistic mt-3 w-100 btn-edit-story" data-id="${story.id}">
             <i class="bi bi-pencil-square me-1"></i> Editar / Gestionar
           </button>
         </div>
