@@ -7,7 +7,7 @@ let clickTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initProfileTrigger();
-  loadStories();
+  loadData();
   initSearchAndFilters();
 });
 
@@ -25,7 +25,6 @@ function initProfileTrigger() {
       clickCount = 0;
     }, 1200);
 
-    // Ruta exacta según la estructura de carpetas de tu proyecto:
     if (clickCount >= 3) {
       clickCount = 0;
       clearTimeout(clickTimer);
@@ -34,12 +33,16 @@ function initProfileTrigger() {
   });
 }
 
-/* --- CARGA DE HISTORIAS DESDE FIRESTORE --- */
-async function loadStories() {
+/* --- CARGA CONJUNTA DE HISTORIAS Y UNIVERSOS DESDE FIRESTORE --- */
+async function loadData() {
   const grid = document.getElementById('storiesGrid');
   if (!grid) return;
 
   try {
+    // 1. Cargar Universos desde Firestore
+    await loadUniverses();
+
+    // 2. Cargar Historias desde Firestore
     const querySnapshot = await getDocs(collection(db, "historias"));
     storiesData = [];
     
@@ -47,39 +50,53 @@ async function loadStories() {
       storiesData.push({ id: doc.id, ...doc.data() });
     });
 
-    renderUniverses(storiesData);
+    // Renderizar historias en el grid
     renderGrid(storiesData);
+
   } catch (error) {
-    console.error("Error al cargar historias de Firebase:", error);
+    console.error("Error al cargar los datos desde Firebase:", error);
     grid.innerHTML = `<div class="col-12 text-center text-white-50"><p>Error al cargar las historias.</p></div>`;
   }
 }
 
-/* --- RENDERIZAR BOTONES DE UNIVERSOS DINÁMICOS --- */
-function renderUniverses(stories) {
+/* --- CARGAR BOTOES DE UNIVERSOS DESDE LA COLECCIÓN 'universos' --- */
+async function loadUniverses() {
   const filterContainer = document.getElementById('universeFilters');
   if (!filterContainer) return;
 
-  const universes = [...new Set(stories.map(s => s.universo || 'Independiente'))];
+  try {
+    const snap = await getDocs(collection(db, "universos"));
+    const universosNombres = [];
 
-  let buttonsHTML = `
-    <button class="btn btn-sm btn-outline-light active btn-filter text-start text-nowrap" data-filter="all">
-      <i class="bi bi-journal-album me-1"></i>Todos los Escritos
-    </button>
-  `;
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.nombre) {
+        universosNombres.push(data.nombre);
+      }
+    });
 
-  universes.forEach(uni => {
-    buttonsHTML += `
-      <button class="btn btn-sm btn-outline-light btn-filter text-start text-nowrap" data-filter="${uni}">
-        <i class="bi bi-stars me-1"></i>${uni}
+    let buttonsHTML = `
+      <button class="btn btn-sm btn-outline-light active btn-filter text-start text-nowrap" data-filter="all">
+        <i class="bi bi-journal-album me-1"></i>Todos los Escritos
       </button>
     `;
-  });
 
-  filterContainer.innerHTML = buttonsHTML;
+    universosNombres.forEach(uni => {
+      buttonsHTML += `
+        <button class="btn btn-sm btn-outline-light btn-filter text-start text-nowrap mb-1" data-filter="${uni}">
+          <i class="bi bi-stars me-1"></i>${uni}
+        </button>
+      `;
+    });
+
+    filterContainer.innerHTML = buttonsHTML;
+
+  } catch (error) {
+    console.warn("No se pudieron cargar los universos secundarios:", error);
+  }
 }
 
-/* --- RENDERIZAR Mosaico / CATÁLOGO DE HISTORIAS --- */
+/* --- RENDERIZAR MOSAICO / CATÁLOGO DE HISTORIAS --- */
 function renderGrid(stories) {
   const grid = document.getElementById('storiesGrid');
   if (!grid) return;
@@ -90,10 +107,11 @@ function renderGrid(stories) {
   }
 
   grid.innerHTML = stories.map(story => {
+    // Extraer vista previa del contenido HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = story.contenido || '';
     const plainText = tempDiv.textContent || tempDiv.innerText || '';
-    const previewText = plainText.substring(0, 120) + (plainText.length > 120 ? '...' : '');
+    const previewText = story.resumen || (plainText.substring(0, 120) + (plainText.length > 120 ? '...' : ''));
 
     return `
       <div class="col-12 col-md-6 col-lg-4 story-card">
@@ -114,6 +132,7 @@ function renderGrid(stories) {
     `;
   }).join('');
 
+  // Asignar eventos de clic a los botones "Leer Historia"
   document.querySelectorAll('.btn-read').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = e.currentTarget.getAttribute('data-id');
