@@ -1,7 +1,3 @@
-/* ==========================================================
-   Panel de Administración - Lógica de Gestión (admin.js)
-   ========================================================== */
-
 import { db } from '../js/firebase-config.js';
 import { 
   collection, 
@@ -21,7 +17,13 @@ let universosLista = [];
 let quillAdmin = null;
 let adminModalInstance = null;
 
+const STORAGE_KEY = 'marsesan_admin_token';
+
+// Validar Token de GitHub al cargar
 document.addEventListener('DOMContentLoaded', async () => {
+  const tieneAcceso = await verificarAccesoToken();
+  if (!tieneAcceso) return; // Si falla el token, detiene la carga del panel
+
   inicializarQuillAdmin();
   
   const modalElement = document.getElementById('storyAdminModal');
@@ -36,6 +38,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarHistoriasFirestore();
   configurarEventosAdmin();
 });
+
+// Función para pedir y validar el Token de GitHub
+async function verificarAccesoToken() {
+  let token = localStorage.getItem(STORAGE_KEY);
+
+  if (!token) {
+    token = prompt("🔒 Acceso Privado MarseSan\nPor favor ingresa tu Token de GitHub activo:");
+    if (!token) {
+      alert("Acceso denegado.");
+      window.location.href = "../../index.html";
+      return false;
+    }
+  }
+
+  try {
+    const response = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `token ${token}` }
+    });
+
+    if (response.ok) {
+      localStorage.setItem(STORAGE_KEY, token);
+      return true;
+    } else {
+      alert("El Token de GitHub es inválido o ha expirado.");
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.href = "../../index.html";
+      return false;
+    }
+  } catch (error) {
+    console.error("Error al verificar el token:", error);
+    alert("Error de conexión al validar el token.");
+    window.location.href = "../../index.html";
+    return false;
+  }
+}
 
 // 1. Inicializar el editor Quill
 function inicializarQuillAdmin() {
