@@ -23,9 +23,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 
-  <!-- Quill.js Editor CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
-
   <!-- Estilos Personalizados -->
   <link rel="stylesheet" href="Atributos/css/style.css">
 </head>
@@ -40,13 +37,8 @@
              alt="Perfil de Marse"
              class="perfil rounded-circle"
              style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;">
-        <span class="fw-bold cursiva nav-small">Historias de MarseSan</span>
+        <span class="fw-bold cursiva nav-small text-white">Historias de MarseSan</span>
       </a>
-      
-      <!-- Botón oculto por defecto (solo visible en Modo Admin) -->
-      <button id="btnNewStory" class="btn btn-sm btn-outline-light font-artistic ms-auto d-none" data-bs-toggle="modal" data-bs-target="#editorModal">
-        <i class="bi bi-pencil-square me-1"></i> Nueva Historia
-      </button>
     </div>
   </nav>
 
@@ -73,17 +65,9 @@
             </h6>
             
             <div class="d-flex flex-md-column gap-2 mb-3 filter-scroll-container" id="universeFilters">
+              <!-- Los filtros de universos se insertan dinámicamente desde Firestore -->
               <button class="btn btn-sm btn-outline-light active btn-filter text-start text-nowrap" data-filter="all">
                 <i class="bi bi-journal-album me-1"></i>Todos los Escritos
-              </button>
-              <button class="btn btn-sm btn-outline-light btn-filter text-start text-nowrap" data-filter="Universo A">
-                <i class="bi bi-stars me-1"></i>El Favorito de Arceus
-              </button>
-              <button class="btn btn-sm btn-outline-light btn-filter text-start text-nowrap" data-filter="Universo B">
-                <i class="bi bi-moon-stars me-1"></i>Slendytubbies Live or Death
-              </button>
-              <button class="btn btn-sm btn-outline-light btn-filter text-start text-nowrap" data-filter="Independiente">
-                <i class="bi bi-bookmark-star me-1"></i>Lobos de las sombras
               </button>
             </div>
           </div>
@@ -94,71 +78,12 @@
       <!-- COLUMNA DERECHA (GRID / CATÁLOGO DE HISTORIAS) -->
       <section class="col-12 col-md-9 col-lg-10 p-4 dark-galaxy">
         <div class="row g-4" id="storiesGrid">
-          
-          <!-- Tarjeta de Ejemplo -->
-          <div class="col-12 col-md-6 col-lg-4 story-card" data-universe="Universo A">
-            <div class="card bg-dark text-white border-secondary card-hover h-100 shadow-sm">
-              <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="badge bg-primary font-artistic">Universo A</span>
-                  <small class="text-muted">24/08/2026</small>
-                </div>
-                <h5 class="card-title font-artistic text-warning fs-4">El Enigma del Abismo</h5>
-                <p class="card-text text-white-50 small flex-grow-1">
-                  Las sombras comenzaban a alargarse sobre las murallas del reino de cristal...
-                </p>
-                <button class="btn btn-sm btn-outline-light font-artistic mt-3 w-100" data-bs-toggle="modal" data-bs-target="#readerModal">
-                  <i class="bi bi-book-half me-1"></i> Leer Historia
-                </button>
-              </div>
-            </div>
-          </div>
-
+          <!-- Las tarjetas de historias se cargarán aquí dinámicamente -->
         </div>
       </section>
 
     </div>
   </main>
-
-  <!-- MODAL DEL EDITOR DE TEXTO (NUEVA HISTORIA) -->
-  <div class="modal fade" id="editorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content bg-dark border-secondary text-white">
-        <div class="modal-header border-secondary">
-          <h5 class="modal-title font-artistic fs-4 text-warning">✨ Redactar Nueva Historia</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-3">
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-8">
-              <div class="input-group">
-                <input type="text" id="storyTitle" class="form-control bg-black text-white border-secondary" placeholder="Título de la historia...">
-                <button class="btn btn-outline-warning font-artistic" type="button" id="btnGenerateTitle">
-                  <i class="bi bi-magic me-1"></i> Generar Título
-                </button>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <select id="storyUniverse" class="form-select bg-black text-white border-secondary">
-                <option value="Independiente">Historia Independiente</option>
-                <option value="Universo A">Universo A</option>
-                <option value="Universo B">Universo B</option>
-              </select>
-            </div>
-          </div>
-          
-          <!-- Contenedor del Editor Quill -->
-          <div id="editor-container" style="height: 380px;"></div>
-        </div>
-        <div class="modal-footer border-secondary">
-          <button type="button" class="btn btn-sm btn-outline-light font-artistic" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-sm btn-warning font-artistic fw-bold" id="btnSaveStory">
-            <i class="bi bi-cloud-arrow-up me-1"></i> Guardar en Firebase
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL DE LECTURA DE HISTORIA COMPLETA -->
   <div class="modal fade" id="readerModal" tabindex="-1" aria-hidden="true">
@@ -166,21 +91,20 @@
       <div class="modal-content bg-dark border-secondary text-white">
         <div class="modal-header border-secondary">
           <div>
-            <span id="readerUniverse" class="badge bg-primary font-artistic me-2">Universo</span>
-            <h4 id="readerTitle" class="modal-title font-artistic text-light d-inline">Título de la Historia</h4>
+            <span id="readerUniverse" class="badge bg-secondary font-artistic me-2">Universo</span>
+            <h4 id="readerTitle" class="modal-title font-artistic text-white d-inline">Título de la Historia</h4>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-4 story-content" id="readerContent">
-          <!-- Contenido dinámico desde JS -->
+        <div class="modal-body p-4 story-content text-white" id="readerContent">
+          <!-- Contenido dinámico cargado desde JS -->
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Scripts: Bootstrap y Quill JS -->
+  <!-- Scripts: Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
   <!-- Lógica de Interacción JS -->
   <script type="module" src="Atributos/js/main.js"></script>

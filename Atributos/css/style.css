@@ -5,8 +5,12 @@
 /* --- 1. TIPOGRAFÍA Y FUENTES --- */
 
 /* Tipografía Artística (Caveat) para la Interfaz */
-.cursiva {
+.cursiva,
+.font-artistic {
   font-family: 'Caveat', cursive;
+}
+
+.cursiva {
   font-size: 1.85rem;
   letter-spacing: 0.5px;
 }
@@ -17,17 +21,13 @@
   letter-spacing: 0.5px;
 }
 
-.font-artistic {
-  font-family: 'Caveat', cursive;
-}
-
 /* Tipografía Serif (Lora) para Lectura y Redacción de Historias */
 .story-content,
 .ql-editor {
   font-family: 'Lora', Georgia, serif !important;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  color: #e0e0e0;
+  font-size: 1.1rem !important;
+  line-height: 1.8 !important;
+  color: #ffffff !important;
 }
 
 /* --- 2. FONDOS TEMÁTICOS (GALAXIA) --- */
@@ -60,7 +60,6 @@
 
 /* --- 3. FOTO DE PERFIL CIRCULAR --- */
 
-/* Ajustado exactamente a 32px x 32px como en la Galería */
 .perfil {
   width: 32px !important;
   height: 32px !important;
@@ -71,7 +70,7 @@
 }
 
 .perfil:hover {
-  border-color: #ffc107 !important; /* Resaltado dorado al pasar el ratón */
+  border-color: #ffc107 !important; /* Resaltado dorado */
   transform: scale(1.05);
 }
 
@@ -88,7 +87,8 @@
 
 /* --- 5. PERSONALIZACIÓN DEL EDITOR DE TEXTO (QUILL JS) --- */
 
-#editor-container {
+#editor-container,
+#admin-editor-container {
   background-color: #121526;
   color: #ffffff;
   border-bottom-left-radius: 8px;
@@ -103,15 +103,25 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Color claro para iconos y selectores de la barra del editor */
-.ql-snowflake, .ql-stroke {
-  stroke: #e0e0e0 !important;
+/* Texto placeholder cuando el editor está vacío */
+.ql-editor.ql-blank::before {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-style: italic;
 }
-.ql-fill {
-  fill: #e0e0e0 !important;
+
+/* Iconos y controles de la barra del editor */
+.ql-toolbar .ql-stroke,
+.ql-snowflake {
+  stroke: #ffffff !important;
 }
+
+.ql-toolbar .ql-fill {
+  fill: #ffffff !important;
+}
+
+.ql-toolbar .ql-picker,
 .ql-picker-label {
-  color: #e0e0e0 !important;
+  color: #ffffff !important;
 }
 
 /* --- 6. PROTECCIÓN Y SELECCIÓN DE TEXTO --- */
@@ -125,7 +135,15 @@
 
 /* --- 7. ADAPTABILIDAD RESPONSIVA (MÓVIL / ESCRITORIO) --- */
 
-/* Pantallas de Escritorio (Laptops / Monitor) */
+.h6-small {
+  font-size: 0.75rem !important;
+}
+
+.nav-small {
+  font-size: 1.35rem !important;
+}
+
+/* Escritorio */
 @media (min-width: 768px) {
   .sidebar-galaxy,
   .sidebar {
@@ -139,7 +157,7 @@
   }
 }
 
-/* Pantallas Pequeñas (Celulares) */
+/* Dispositivos móviles */
 @media (max-width: 767.98px) {
   .sidebar-galaxy,
   .sidebar {
@@ -150,7 +168,7 @@
     min-height: auto !important;
   }
 
-  /* Barra de botones de universos con scroll horizontal */
+  /* Barra de botones con scroll horizontal */
   .filter-scroll-container {
     overflow-x: auto;
     white-space: nowrap;
@@ -165,37 +183,4 @@
     background: rgba(255, 255, 255, 0.25);
     border-radius: 4px;
   }
-}
-
-.h6-small {
-  font-size: 0.75rem !important;
-}
-
-.nav-small {
-  font-size: 1.35rem !important;
-}
-
-/* Corrección de color e iluminación para Quill Editor */
-.ql-editor {
-  color: #ffffff !important;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-/* Texto de ayuda (placeholder) cuando el editor está vacío */
-.ql-editor.ql-blank::before {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Iconos y opciones de la barra de herramientas */
-.ql-toolbar .ql-stroke {
-  stroke: #ffffff !important;
-}
-
-.ql-toolbar .ql-fill {
-  fill: #ffffff !important;
-}
-
-.ql-toolbar .ql-picker {
-  color: #ffffff !important;
 }

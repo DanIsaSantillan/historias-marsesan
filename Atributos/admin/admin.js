@@ -8,10 +8,12 @@ import {
   getDocs, 
   addDoc, 
   doc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
-  orderBy 
+  orderBy,
+  serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 let historiasData = [];
@@ -21,13 +23,21 @@ let adminModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   inicializarQuillAdmin();
-  adminModalInstance = new bootstrap.Modal(document.getElementById('storyAdminModal'));
   
+  const modalElement = document.getElementById('storyAdminModal');
+  adminModalInstance = new bootstrap.Modal(modalElement);
+
+  // Evitar advertencias de accesibilidad (aria-hidden)
+  modalElement.addEventListener('hidden.bs.modal', () => {
+    if (document.activeElement) document.activeElement.blur();
+  });
+
+  await cargarUniversos();
   await cargarHistoriasFirestore();
   configurarEventosAdmin();
 });
 
-// Inicializar el editor Quill
+// 1. Inicializar el editor Quill
 function inicializarQuillAdmin() {
   quillAdmin = new Quill('#admin-editor-container', {
     theme: 'snow',
@@ -43,7 +53,36 @@ function inicializarQuillAdmin() {
   });
 }
 
-// Cargar historias desde Firestore
+// 2. Cargar universos registrados desde Firestore
+async function cargarUniversos() {
+  const select = document.getElementById('adminUniverseSelect');
+  if (!select) return;
+
+  select.innerHTML = '';
+  const setUniversos = new Set(["Ideas Random"]);
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "universos"));
+    querySnapshot.forEach(docSnap => {
+      if (docSnap.exists() && docSnap.data().nombre) {
+        setUniversos.add(docSnap.data().nombre.trim());
+      }
+    });
+  } catch (error) {
+    console.warn('No se pudo cargar la colección de universos (se extraerán de las historias):', error);
+  }
+
+  universosLista = Array.from(setUniversos);
+
+  universosLista.forEach(universo => {
+    const option = document.createElement('option');
+    option.value = universo;
+    option.textContent = universo;
+    select.appendChild(option);
+  });
+}
+
+// 3. Cargar historias desde Firestore
 async function cargarHistoriasFirestore() {
   try {
     const q = query(collection(db, "historias"), orderBy("fecha", "desc"));
@@ -51,45 +90,37 @@ async function cargarHistoriasFirestore() {
 
     historiasData = [];
     querySnapshot.forEach((documento) => {
+      const data = documento.data();
+
+      let fechaFormateada = '';
+      if (data.fecha && typeof data.fecha.toDate === 'function') {
+        fechaFormateada = data.fecha.toDate().toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      } else if (typeof data.fecha === 'string') {
+        fechaFormateada = data.fecha;
+      }
+
       historiasData.push({
         id: documento.id,
-        ...documento.data()
+        ...data,
+        fechaFormateada
       });
     });
     
-    actualizarUniversos();
     renderizarGridAdmin();
   } catch (error) {
-    console.error('Error al cargar la base de datos de Firestore en Admin:', error);
+    console.error('Error al cargar historias en Admin:', error);
   }
 }
 
-// Extraer universos únicos
-function actualizarUniversos() {
-  const universosUnicos = [...new Set(historiasData.map(h => h.universo))].filter(Boolean);
-  universosLista = universosUnicos;
-
-  const select = document.getElementById('adminUniverseSelect');
-  select.innerHTML = '';
-
-  if (universosLista.length === 0) {
-    const defaultOpt = document.createElement('option');
-    defaultOpt.value = "Ideas Random";
-    defaultOpt.textContent = "Ideas Random";
-    select.appendChild(defaultOpt);
-  } else {
-    universosLista.forEach(universo => {
-      const option = document.createElement('option');
-      option.value = universo;
-      option.textContent = universo;
-      select.appendChild(option);
-    });
-  }
-}
-
-// Renderizar tarjetas en el panel privado
+// 4. Renderizar tarjetas en el panel privado
 function renderizarGridAdmin() {
   const container = document.getElementById('adminStoriesGrid');
+  if (!container) return;
+
   container.innerHTML = '';
 
   if (historiasData.length === 0) {
@@ -105,7 +136,7 @@ function renderizarGridAdmin() {
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="badge bg-warning text-dark font-artistic">${story.universo || 'Sin categoría'}</span>
-            <small class="text-white-50" style="font-size: 0.75rem;">${story.fecha || ''}</small>
+            <small class="text-white-50" style="font-size: 0.75rem;">${story.fechaFormateada || ''}</small>
           </div>
           <h5 class="card-title font-artistic text-warning fs-4">${story.titulo || 'Sin título'}</h5>
           <p class="card-text text-white-50 small flex-grow-1">${story.resumen || ''}</p>
@@ -126,7 +157,7 @@ function renderizarGridAdmin() {
   });
 }
 
-// Configuración de botones y eventos de Firestore
+// 5. Eventos y lógica de creación / edición
 function configurarEventosAdmin() {
   const checkNew = document.getElementById('checkNewUniverseAdmin');
   const inputNew = document.getElementById('adminNewUniverseInput');
@@ -135,7 +166,7 @@ function configurarEventosAdmin() {
   const btnSave = document.getElementById('btnSaveAdminStory');
   const btnDelete = document.getElementById('btnDeleteStory');
 
-  checkNew.addEventListener('change', () => {
+  checkNew?.addEventListener('change', () => {
     if (checkNew.checked) {
       inputNew.classList.remove('d-none');
       selectUniverse.disabled = true;
@@ -145,7 +176,7 @@ function configurarEventosAdmin() {
     }
   });
 
-  btnOpenCreate.addEventListener('click', () => {
+  btnOpenCreate?.addEventListener('click', () => {
     document.getElementById('editingStoryId').value = '';
     document.getElementById('modalAdminTitle').textContent = '✨ Redactar Nueva Historia';
     document.getElementById('adminStoryTitle').value = '';
@@ -159,15 +190,17 @@ function configurarEventosAdmin() {
     adminModalInstance.show();
   });
 
-  // Guardar (Crear o Modificar en Firestore)
-  btnSave.addEventListener('click', async () => {
+  // Guardar en Firestore
+  btnSave?.addEventListener('click', async () => {
     const storyId = document.getElementById('editingStoryId').value;
     const titulo = document.getElementById('adminStoryTitle').value.trim();
+    const esUniversoNuevo = checkNew.checked;
     
-    let universo = checkNew.checked ? inputNew.value.trim() : selectUniverse.value;
+    let universo = esUniversoNuevo ? inputNew.value.trim() : selectUniverse.value;
     const contenidoHTML = quillAdmin.root.innerHTML;
+    const textoPlano = quillAdmin.getText().trim();
 
-    if (!titulo || !universo || quillAdmin.getText().trim() === '') {
+    if (!titulo || !universo || textoPlano === '') {
       alert('Por favor, completa el título, universo y contenido.');
       return;
     }
@@ -176,41 +209,49 @@ function configurarEventosAdmin() {
     btnSave.textContent = 'Guardando...';
 
     try {
-      if (storyId) {
-        // Actualizar documento existente
-        const docRef = doc(db, "historias", storyId);
-        await updateDoc(docRef, {
-          titulo: titulo,
-          universo: universo,
-          contenido: contenidoHTML,
-          resumen: quillAdmin.getText().substring(0, 100) + '...'
-        });
-      } else {
-        // Crear nuevo documento
-        await addDoc(collection(db, "historias"), {
-          titulo: titulo,
-          universo: universo,
-          fecha: new Date().toISOString().split('T')[0],
-          resumen: quillAdmin.getText().substring(0, 100) + '...',
-          contenido: contenidoHTML
+      // Registrar Universo en la colección 'universos' si se seleccionó la opción de nuevo
+      if (esUniversoNuevo) {
+        await setDoc(doc(db, "universos", universo), {
+          nombre: universo,
+          creado: serverTimestamp()
         });
       }
 
+      // Preparar payload de la historia
+      const payloadHistoria = {
+        titulo: titulo,
+        universo: universo,
+        resumen: textoPlano.substring(0, 100) + '...',
+        contenido: contenidoHTML
+      };
+
+      if (storyId) {
+        // Editar existente
+        await updateDoc(doc(db, "historias", storyId), payloadHistoria);
+      } else {
+        // Crear nueva historia
+        payloadHistoria.fecha = serverTimestamp();
+        await addDoc(collection(db, "historias"), payloadHistoria);
+      }
+
+      await cargarUniversos();
       await cargarHistoriasFirestore();
       adminModalInstance.hide();
       alert('¡Operación realizada con éxito!');
     } catch (error) {
       console.error('Error al guardar en Firestore:', error);
-      alert('Ocurrió un error al intentar guardar.');
+      alert('Ocurrió un error al intentar guardar. Revisa las reglas de Firestore o la consola.');
     } finally {
       btnSave.disabled = false;
       btnSave.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Guardar Obra';
     }
   });
 
-  // Eliminar en Firestore
-  btnDelete.addEventListener('click', async () => {
+  // Eliminar
+  btnDelete?.addEventListener('click', async () => {
     const storyId = document.getElementById('editingStoryId').value;
+    if (!storyId) return;
+
     if (confirm('¿Estás segura de que deseas eliminar esta historia?')) {
       try {
         await deleteDoc(doc(db, "historias", storyId));
@@ -233,6 +274,12 @@ function abrirModalEditar(id) {
   document.getElementById('adminStoryTitle').value = story.titulo;
   
   const selectUniverse = document.getElementById('adminUniverseSelect');
+  const checkNew = document.getElementById('checkNewUniverseAdmin');
+  const inputNew = document.getElementById('adminNewUniverseInput');
+
+  checkNew.checked = false;
+  inputNew.classList.add('d-none');
+  selectUniverse.disabled = false;
   selectUniverse.value = story.universo;
 
   quillAdmin.root.innerHTML = story.contenido;

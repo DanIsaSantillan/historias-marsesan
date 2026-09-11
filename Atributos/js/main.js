@@ -22,9 +22,24 @@ async function cargarHistoriasFirestore() {
 
     historiasData = [];
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      
+      // Formatear fecha de Firestore si es un Timestamp
+      let fechaFormateada = '';
+      if (data.fecha && typeof data.fecha.toDate === 'function') {
+        fechaFormateada = data.fecha.toDate().toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      } else if (typeof data.fecha === 'string') {
+        fechaFormateada = data.fecha;
+      }
+
       historiasData.push({
         id: doc.id,
-        ...doc.data()
+        ...data,
+        fechaFormateada
       });
     });
 
@@ -37,14 +52,19 @@ async function cargarHistoriasFirestore() {
 
 // --- 2. GENERACIÓN DINÁMICA DE BOTONES DE FILTRO ---
 function extraerUniversosYRenderizar() {
-  const universosUnicos = [...new Set(historiasData.map(h => h.universo))]
-    .filter(u => u !== "Ideas Random" && u !== "Independiente");
+  // Limpiamos espacios e ignoramos los nombres reservados
+  const universosUnicos = [...new Set(
+    historiasData
+      .map(h => (h.universo ? h.universo.trim() : ''))
+      .filter(u => u && u !== "Ideas Random" && u !== "Independiente")
+  )];
 
   universosLista = universosUnicos;
   const container = document.getElementById('universeFiltersContainer');
 
   if (!container) return;
 
+  // Eliminar botones dinámicos anteriores para no duplicar
   document.querySelectorAll('.btn-universe-dynamic').forEach(btn => btn.remove());
 
   universosLista.forEach((universo, index) => {
@@ -81,7 +101,7 @@ function renderizarTarjetas(historias) {
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="badge bg-primary font-artistic">${story.universo || 'Sin categoría'}</span>
-            <small class="text-white-50" style="font-size: 0.75rem;">${story.fecha || ''}</small>
+            <small class="text-white-50" style="font-size: 0.75rem;">${story.fechaFormateada || ''}</small>
           </div>
           <h5 class="card-title font-artistic text-light fs-4">${story.titulo || 'Sin título'}</h5>
           <p class="card-text text-white-50 small flex-grow-1">${story.resumen || ''}</p>
