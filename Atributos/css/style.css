@@ -174,3 +174,28 @@
 .nav-small {
   font-size: 1.35rem !important;
 }
+
+/* Corrección de color e iluminación para Quill Editor */
+.ql-editor {
+  color: #ffffff !important;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Texto de ayuda (placeholder) cuando el editor está vacío */
+.ql-editor.ql-blank::before {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Iconos y opciones de la barra de herramientas */
+.ql-toolbar .ql-stroke {
+  stroke: #ffffff !important;
+}
+
+.ql-toolbar .ql-fill {
+  fill: #ffffff !important;
+}
+
+.ql-toolbar .ql-picker {
+  color: #ffffff !important;
+}
