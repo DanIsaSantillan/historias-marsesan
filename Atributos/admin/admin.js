@@ -17,6 +17,11 @@ let universosLista = [];
 let quillAdmin = null;
 let adminModalInstance = null;
 
+// Variables para el Lector de Voz (TTS) y Diccionario de Correcciones/Ignorados
+let synth = window.speechSynthesis;
+let lecturaUtterance = null;
+let diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+
 const STORAGE_KEY = 'marsesan_admin_token';
 
 // Validar Token de GitHub al cargar
@@ -29,14 +34,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modalElement = document.getElementById('storyAdminModal');
   adminModalInstance = new bootstrap.Modal(modalElement);
 
-  // Evitar advertencias de accesibilidad (aria-hidden)
+  // Evitar advertencias de accesibilidad (aria-hidden) y detener voz al cerrar modal
   modalElement.addEventListener('hidden.bs.modal', () => {
+    detenerLectura();
     if (document.activeElement) document.activeElement.blur();
   });
 
   await cargarUniversos();
   await cargarHistoriasFirestore();
   configurarEventosAdmin();
+  configurarHerramientasVozYDiccionario();
 });
 
 // Función para pedir y validar el Token de GitHub
@@ -323,4 +330,70 @@ function abrirModalEditar(id) {
   document.getElementById('btnDeleteStory').classList.remove('d-none');
 
   adminModalInstance.show();
+}
+
+// 6. Lógica para el Lector de Texto a Voz (TTS) y Diccionario de Ignorados
+function configurarHerramientasVozYDiccionario() {
+  const btnPlay = document.getElementById('btnPlayTTS');
+  const btnPause = document.getElementById('btnPauseTTS');
+  const btnStop = document.getElementById('btnStopTTS');
+  const btnIgnore = document.getElementById('btnIgnoreSelected');
+
+  // Bucle o reproducción del Lector
+  btnPlay?.addEventListener('click', () => {
+    if (synth.paused) {
+      synth.resume();
+      return;
+    }
+
+    if (synth.speaking) {
+      synth.cancel();
+    }
+
+    let texto = quillAdmin.getText().trim();
+    if (!texto) {
+      alert("No hay texto en el editor para leer.");
+      return;
+    }
+
+    lecturaUtterance = new SpeechSynthesisUtterance(texto);
+    lecturaUtterance.lang = 'es-ES';
+    lecturaUtterance.rate = 1.0; // Velocidad normal
+
+    synth.speak(lecturaUtterance);
+  });
+
+  btnPause?.addEventListener('click', () => {
+    if (synth.speaking && !synth.paused) {
+      synth.pause();
+    }
+  });
+
+  btnStop?.addEventListener('click', () => {
+    detenerLectura();
+  });
+
+  // Agregar la palabra seleccionada al diccionario
+  btnIgnore?.addEventListener('click', () => {
+    const range = quillAdmin.getSelection();
+    if (range && range.length > 0) {
+      const palabraSeleccionada = quillAdmin.getText(range.index, range.length).trim();
+      
+      if (palabraSeleccionada && !diccionarioIgnorados.includes(palabraSeleccionada)) {
+        diccionarioIgnorados.push(palabraSeleccionada);
+        localStorage.setItem('marsesan_diccionario_ignorados', JSON.stringify(diccionarioIgnorados));
+        alert(`✨ Se agregó "${palabraSeleccionada}" a tus palabras ignoradas.`);
+      } else if (diccionarioIgnorados.includes(palabraSeleccionada)) {
+        alert(`"${palabraSeleccionada}" ya estaba en tu lista.`);
+      }
+    } else {
+      alert("Por favor, selecciona primero una palabra en el editor.");
+    }
+  });
+}
+
+function detenerLectura() {
+  if (synth && (synth.speaking || synth.paused)) {
+    synth.cancel();
+  }
 }

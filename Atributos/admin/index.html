@@ -92,6 +92,32 @@
             </div>
           </div>
 
+          <!-- BARRA DE HERRAMIENTAS ADICIONAL: LECTOR Y DICCIONARIO ANTI-RUIDO -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 p-2 rounded bg-black border border-secondary">
+            
+            <!-- Controles Texto a Voz (TTS) -->
+            <div class="d-flex align-items-center gap-1">
+              <span class="text-white-50 small me-1 font-artistic fs-6"><i class="bi bi-megaphone"></i> Escuchar:</span>
+              <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayTTS" title="Leer borrador en voz alta">
+                <i class="bi bi-play-fill"></i> Leer
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-warning font-artistic" id="btnPauseTTS" title="Pausar lectura">
+                <i class="bi bi-pause-fill"></i> Pausa
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger font-artistic" id="btnStopTTS" title="Detener lectura">
+                <i class="bi bi-stop-fill"></i> Detener
+              </button>
+            </div>
+
+            <!-- Ignorador de Palabras Marcadas -->
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-info font-artistic" id="btnIgnoreSelected">
+                <i class="bi bi-eye-slash me-1"></i> Ignorar Selección
+              </button>
+            </div>
+
+          </div>
+
           <!-- Editor de Texto Quill -->
           <div class="mb-2">
             <label class="form-label font-artistic fs-5 text-white mb-1">Contenido de la Historia / Capítulo</label>
