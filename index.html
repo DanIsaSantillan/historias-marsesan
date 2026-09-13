@@ -85,20 +85,38 @@
     </div>
   </main>
 
-  <!-- MODAL DE LECTURA DE HISTORIA COMPLETA -->
+  <!-- MODAL DE LECTURA DE HISTORIA COMPLETA CON REPRODUCTOR DE VOZ -->
   <div class="modal fade" id="readerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content bg-dark border-secondary text-white">
-        <div class="modal-header border-secondary">
-          <div>
+        
+        <div class="modal-header border-secondary d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
             <span id="readerUniverse" class="badge bg-secondary font-artistic me-2">Universo</span>
-            <h4 id="readerTitle" class="modal-title font-artistic text-white d-inline">Título de la Historia</h4>
+            <h4 id="readerTitle" class="modal-title font-artistic text-white d-inline mb-0">Título de la Historia</h4>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+          <!-- Controles de Texto a Voz (TTS) en vista pública -->
+          <div class="d-flex align-items-center gap-1 bg-black p-1 px-2 rounded border border-secondary ms-auto me-3">
+            <span class="text-white-50 small font-artistic me-1"><i class="bi bi-megaphone"></i> Escuchar:</span>
+            <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayPublicTTS" title="Leer capítulo en voz alta">
+              <i class="bi bi-play-fill"></i> Leer
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning font-artistic" id="btnPausePublicTTS" title="Pausar lectura">
+              <i class="bi bi-pause-fill"></i> Pausa
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger font-artistic" id="btnStopPublicTTS" title="Detener lectura">
+              <i class="bi bi-stop-fill"></i> Detener
+            </button>
+          </div>
+
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+
         <div class="modal-body p-4 story-content text-white" id="readerContent">
           <!-- Contenido dinámico cargado desde JS -->
         </div>
+
       </div>
     </div>
   </div>

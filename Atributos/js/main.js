@@ -5,10 +5,16 @@ let storiesData = [];
 let clickCount = 0;
 let clickTimer = null;
 
+// Variables para el Lector de Voz (TTS Público) y Diccionario
+let synth = window.speechSynthesis;
+let lecturaUtterance = null;
+let diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+
 document.addEventListener('DOMContentLoaded', () => {
   initProfileTrigger();
   loadData();
   initSearchAndFilters();
+  initPublicTTSControls();
 });
 
 /* --- FORMATER FECHAS DE FIRESTORE --- */
@@ -165,12 +171,87 @@ function openReaderModal(id) {
   const story = storiesData.find(s => s.id === id);
   if (!story) return;
 
+  // Cancelar la lectura previa si se cambia de historia rápidamente
+  stopPublicReading();
+
   document.getElementById('readerTitle').textContent = story.titulo || 'Sin título';
   document.getElementById('readerUniverse').textContent = story.universo || 'Independiente';
   document.getElementById('readerContent').innerHTML = story.contenido || '';
 
-  const modal = new bootstrap.Modal(document.getElementById('readerModal'));
+  const readerModalElement = document.getElementById('readerModal');
+  const modal = new bootstrap.Modal(readerModalElement);
+  
+  // Al cerrar el modal se detiene automáticamente la voz
+  readerModalElement.addEventListener('hidden.bs.modal', () => {
+    stopPublicReading();
+  }, { once: true });
+
   modal.show();
+}
+
+/* --- CONTROLES Y LÓGICA DE TEXTO A VOZ (PUBLIC TTS) --- */
+function initPublicTTSControls() {
+  const btnPlay = document.getElementById('btnPlayPublicTTS');
+  const btnPause = document.getElementById('btnPausePublicTTS');
+  const btnStop = document.getElementById('btnStopPublicTTS');
+
+  // BOTÓN LEER / REANUDAR
+  btnPlay?.addEventListener('click', () => {
+    // 1. Si estaba pausado, reanudar en la misma palabra
+    if (synth.paused) {
+      synth.resume();
+      return;
+    }
+
+    // 2. Si ya está leyendo en voz alta activamente, no duplicar
+    if (synth.speaking) {
+      return;
+    }
+
+    // 3. Obtener el texto del modal
+    const readerContent = document.getElementById('readerContent');
+    if (!readerContent) return;
+
+    let texto = readerContent.innerText.trim();
+    if (!texto) {
+      alert("No hay texto para leer en este capítulo.");
+      return;
+    }
+
+    // Actualizar el diccionario desde localStorage por si hubo cambios en la sección admin
+    diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+
+    // Omisión de palabras ignoradas
+    let textoProcesado = texto;
+    diccionarioIgnorados.forEach(palabra => {
+      const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
+      textoProcesado = textoProcesado.replace(regex, '');
+    });
+
+    lecturaUtterance = new SpeechSynthesisUtterance(textoProcesado);
+    lecturaUtterance.lang = 'es-ES';
+    lecturaUtterance.rate = 1.0;
+
+    synth.speak(lecturaUtterance);
+  });
+
+  // BOTÓN PAUSA
+  btnPause?.addEventListener('click', () => {
+    if (synth.speaking && !synth.paused) {
+      synth.pause();
+    }
+  });
+
+  // BOTÓN DETENER
+  btnStop?.addEventListener('click', () => {
+    stopPublicReading();
+  });
+}
+
+function stopPublicReading() {
+  if (synth && (synth.speaking || synth.paused)) {
+    synth.cancel();
+  }
 }
 
 /* --- BÚSQUEDA Y FILTRADO --- */
