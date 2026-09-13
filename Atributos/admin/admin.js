@@ -81,7 +81,7 @@ async function verificarAccesoToken() {
   }
 }
 
-// 1. Inicializar el editor Quill
+// 1. Inicializar el editor Quill con filtro de pegado (Sin imágenes)
 function inicializarQuillAdmin() {
   quillAdmin = new Quill('#admin-editor-container', {
     theme: 'snow',
@@ -94,6 +94,12 @@ function inicializarQuillAdmin() {
         ['clean']
       ]
     }
+  });
+
+  // Filtro al pegar: remueve automáticamente imágenes Base64 o incrustadas
+  quillAdmin.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+    delta.ops = delta.ops.filter(op => !op.insert || !op.insert.image);
+    return delta;
   });
 }
 
@@ -253,7 +259,6 @@ function configurarEventosAdmin() {
     btnSave.textContent = 'Guardando...';
 
     try {
-      // Registrar Universo en la colección 'universos' si se seleccionó la opción de nuevo
       if (esUniversoNuevo) {
         await setDoc(doc(db, "universos", universo), {
           nombre: universo,
@@ -261,7 +266,6 @@ function configurarEventosAdmin() {
         });
       }
 
-      // Preparar payload de la historia
       const payloadHistoria = {
         titulo: titulo,
         universo: universo,
@@ -270,10 +274,8 @@ function configurarEventosAdmin() {
       };
 
       if (storyId) {
-        // Editar existente
         await updateDoc(doc(db, "historias", storyId), payloadHistoria);
       } else {
-        // Crear nueva historia
         payloadHistoria.fecha = serverTimestamp();
         await addDoc(collection(db, "historias"), payloadHistoria);
       }
@@ -332,7 +334,7 @@ function abrirModalEditar(id) {
   adminModalInstance.show();
 }
 
-// 6. Lógica simplificada para el Lector de Voz (TTS por selección) y Diccionario
+// 6. Lógica simplificada de Voz (TTS por selección/total) y Diccionario para Admin
 function configurarHerramientasVozYDiccionario() {
   const btnPlay = document.getElementById('btnPlayTTS');
   const btnStop = document.getElementById('btnStopTTS');
@@ -340,20 +342,14 @@ function configurarHerramientasVozYDiccionario() {
 
   // BOTÓN LEER (Por selección o borrador completo)
   btnPlay?.addEventListener('click', () => {
-    // Si ya hay una lectura activa, la cancelamos para reiniciar con la selección actual
-    if (synth.speaking) {
-      synth.cancel();
-    }
+    detenerLectura();
 
-    // Obtener la selección actual en Quill
     const selection = quillAdmin.getSelection();
     let textoALeer = "";
 
     if (selection && selection.length > 0) {
-      // Lee ÚNICAMENTE el fragmento o párrafo seleccionado
       textoALeer = quillAdmin.getText(selection.index, selection.length).trim();
     } else {
-      // Si no hay selección, lee todo el borrador desde el inicio
       textoALeer = quillAdmin.getText().trim();
     }
 
@@ -362,7 +358,8 @@ function configurarHerramientasVozYDiccionario() {
       return;
     }
 
-    // Limpieza con tu diccionario de palabras ignoradas
+    diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+
     let textoProcesado = textoALeer;
     diccionarioIgnorados.forEach(palabra => {
       const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
