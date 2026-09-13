@@ -5,10 +5,11 @@ let storiesData = [];
 let clickCount = 0;
 let clickTimer = null;
 
-// Variables para el Lector de Voz (TTS Público) y Diccionario
+// Variables para el Lector de Voz (TTS Público), Diccionario y Posición de Pausa
 let synth = window.speechSynthesis;
 let lecturaUtterance = null;
 let diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+let charIndexPausa = 0; // Guarda la posición de la letra donde se pausó
 
 document.addEventListener('DOMContentLoaded', () => {
   initProfileTrigger();
@@ -171,7 +172,7 @@ function openReaderModal(id) {
   const story = storiesData.find(s => s.id === id);
   if (!story) return;
 
-  // Cancelar la lectura previa si se cambia de historia rápidamente
+  // Cancelar la lectura previa si se abre una nueva historia
   stopPublicReading();
 
   document.getElementById('readerTitle').textContent = story.titulo || 'Sin título';
@@ -181,7 +182,7 @@ function openReaderModal(id) {
   const readerModalElement = document.getElementById('readerModal');
   const modal = new bootstrap.Modal(readerModalElement);
   
-  // Al cerrar el modal se detiene automáticamente la voz
+  // Al cerrar el modal se detiene la voz inmediatamente
   readerModalElement.addEventListener('hidden.bs.modal', () => {
     stopPublicReading();
   }, { once: true });
@@ -189,56 +190,46 @@ function openReaderModal(id) {
   modal.show();
 }
 
-/* --- CONTROLES Y LÓGICA DE TEXTO A VOZ (PUBLIC TTS) --- */
+/* --- CONTROLES Y LÓGICA ROBUSTA DE TEXTO A VOZ (PUBLIC TTS) --- */
 function initPublicTTSControls() {
   const btnPlay = document.getElementById('btnPlayPublicTTS');
   const btnPause = document.getElementById('btnPausePublicTTS');
   const btnStop = document.getElementById('btnStopPublicTTS');
 
-  // BOTÓN LEER / REANUDAR
+  // BOTÓN LEER (Inicia siempre desde el principio)
   btnPlay?.addEventListener('click', () => {
-    // 1. Si estaba pausado, reanudar en la misma palabra
-    if (synth.paused) {
-      synth.resume();
-      return;
-    }
-
-    // 2. Si ya está leyendo en voz alta activamente, no duplicar
-    if (synth.speaking) {
-      return;
-    }
-
-    // 3. Obtener el texto del modal
-    const readerContent = document.getElementById('readerContent');
-    if (!readerContent) return;
-
-    let texto = readerContent.innerText.trim();
-    if (!texto) {
-      alert("No hay texto para leer en este capítulo.");
-      return;
-    }
-
-    // Actualizar el diccionario desde localStorage por si hubo cambios en la sección admin
-    diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
-
-    // Omisión de palabras ignoradas
-    let textoProcesado = texto;
-    diccionarioIgnorados.forEach(palabra => {
-      const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
-      textoProcesado = textoProcesado.replace(regex, '');
-    });
-
-    lecturaUtterance = new SpeechSynthesisUtterance(textoProcesado);
-    lecturaUtterance.lang = 'es-ES';
-    lecturaUtterance.rate = 1.0;
-
-    synth.speak(lecturaUtterance);
+    stopPublicReading();
+    reproducirDesdePosicion(0);
   });
 
-  // BOTÓN PAUSA
+  // BOTÓN PAUSA / REANUDAR (Funciona como un interruptor)
   btnPause?.addEventListener('click', () => {
+    // 1. Si está leyendo activamente -> Pausar
     if (synth.speaking && !synth.paused) {
       synth.pause();
+      restablecerBotonPausa(true);
+      return;
+    }
+
+    // 2. Si estaba pausado -> Reanudar
+    if (synth.paused) {
+      synth.resume();
+
+      // Si el navegador se traba y no reanuda la voz, forzamos la lectura desde la palabra guardada
+      setTimeout(() => {
+        if (synth.paused) {
+          synth.cancel();
+          reproducirDesdePosicion(charIndexPausa);
+        }
+      }, 200);
+
+      restablecerBotonPausa(false);
+      return;
+    }
+
+    // 3. Si se detuvo tras la pausa pero guardó la posición previa
+    if (!synth.speaking && charIndexPausa > 0) {
+      reproducirDesdePosicion(charIndexPausa);
     }
   });
 
@@ -248,10 +239,75 @@ function initPublicTTSControls() {
   });
 }
 
+function reproducirDesdePosicion(startCharIndex = 0) {
+  const readerContent = document.getElementById('readerContent');
+  if (!readerContent) return;
+
+  let texto = readerContent.innerText.trim();
+  if (!texto) {
+    alert("No hay texto para leer en este capítulo.");
+    return;
+  }
+
+  // Actualizar el diccionario desde localStorage
+  diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
+
+  // Filtrar palabras ignoradas
+  let textoProcesado = texto;
+  diccionarioIgnorados.forEach(palabra => {
+    const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
+    textoProcesado = textoProcesado.replace(regex, '');
+  });
+
+  // Recortar el texto para comenzar exactamente donde se pausó
+  if (startCharIndex > 0 && startCharIndex < textoProcesado.length) {
+    textoProcesado = textoProcesado.substring(startCharIndex);
+  } else {
+    charIndexPausa = 0;
+  }
+
+  lecturaUtterance = new SpeechSynthesisUtterance(textoProcesado);
+  lecturaUtterance.lang = 'es-ES';
+  lecturaUtterance.rate = 1.0;
+
+  // Registrar en tiempo real por qué palabra va leyendo
+  lecturaUtterance.onboundary = (event) => {
+    if (event.name === 'word') {
+      charIndexPausa = startCharIndex + event.charIndex;
+    }
+  };
+
+  // Al finalizar la narración completa
+  lecturaUtterance.onend = () => {
+    charIndexPausa = 0;
+    restablecerBotonPausa(false);
+  };
+
+  synth.speak(lecturaUtterance);
+  restablecerBotonPausa(false);
+}
+
+function restablecerBotonPausa(estaPausado) {
+  const btnPause = document.getElementById('btnPausePublicTTS');
+  if (!btnPause) return;
+
+  if (estaPausado) {
+    btnPause.innerHTML = '<i class="bi bi-play-circle-fill"></i> Reanudar';
+    btnPause.classList.remove('btn-outline-warning');
+    btnPause.classList.add('btn-warning');
+  } else {
+    btnPause.innerHTML = '<i class="bi bi-pause-fill"></i> Pausa';
+    btnPause.classList.remove('btn-warning');
+    btnPause.classList.add('btn-outline-warning');
+  }
+}
+
 function stopPublicReading() {
+  charIndexPausa = 0;
   if (synth && (synth.speaking || synth.paused)) {
     synth.cancel();
   }
+  restablecerBotonPausa(false);
 }
 
 /* --- BÚSQUEDA Y FILTRADO --- */
