@@ -5,11 +5,12 @@ let storiesData = [];
 let clickCount = 0;
 let clickTimer = null;
 
-// Variables para el Lector de Voz (TTS Público), Diccionario y Posición de Pausa
+// Variables para el Lector de Voz (TTS Público), Diccionario y Estado de Lectura
 let synth = window.speechSynthesis;
 let lecturaUtterance = null;
 let diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
-let charIndexPausa = 0; // Guarda la posición de la letra donde se pausó
+let charIndexPausa = 0; 
+let estaPausado = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   initProfileTrigger();
@@ -137,7 +138,6 @@ function renderGrid(stories) {
     const plainText = tempDiv.textContent || tempDiv.innerText || '';
     const previewText = story.resumen || (plainText.substring(0, 120) + (plainText.length > 120 ? '...' : ''));
     
-    // Formatear la fecha procesada
     const fechaFormateada = formatDate(story.fecha);
 
     return `
@@ -172,7 +172,6 @@ function openReaderModal(id) {
   const story = storiesData.find(s => s.id === id);
   if (!story) return;
 
-  // Cancelar la lectura previa si se abre una nueva historia
   stopPublicReading();
 
   document.getElementById('readerTitle').textContent = story.titulo || 'Sin título';
@@ -182,7 +181,6 @@ function openReaderModal(id) {
   const readerModalElement = document.getElementById('readerModal');
   const modal = new bootstrap.Modal(readerModalElement);
   
-  // Al cerrar el modal se detiene la voz inmediatamente
   readerModalElement.addEventListener('hidden.bs.modal', () => {
     stopPublicReading();
   }, { once: true });
@@ -190,7 +188,7 @@ function openReaderModal(id) {
   modal.show();
 }
 
-/* --- CONTROLES Y LÓGICA ROBUSTA DE TEXTO A VOZ (PUBLIC TTS) --- */
+/* --- CONTROLES Y LÓGICA DE TEXTO A VOZ (PUBLIC TTS) --- */
 function initPublicTTSControls() {
   const btnPlay = document.getElementById('btnPlayPublicTTS');
   const btnPause = document.getElementById('btnPausePublicTTS');
@@ -199,37 +197,24 @@ function initPublicTTSControls() {
   // BOTÓN LEER (Inicia siempre desde el principio)
   btnPlay?.addEventListener('click', () => {
     stopPublicReading();
-    reproducirDesdePosicion(0);
+    reproducirTexto(0);
   });
 
-  // BOTÓN PAUSA / REANUDAR (Funciona como un interruptor)
+  // BOTÓN PAUSA / REANUDAR (Alterna dinámicamente)
   btnPause?.addEventListener('click', () => {
-    // 1. Si está leyendo activamente -> Pausar
-    if (synth.speaking && !synth.paused) {
-      synth.pause();
+    // 1. Si está leyendo activamente -> Pausar y guardar posición
+    if (synth.speaking && !estaPausado) {
+      estaPausado = true;
+      synth.cancel();
       restablecerBotonPausa(true);
       return;
     }
 
-    // 2. Si estaba pausado -> Reanudar
-    if (synth.paused) {
-      synth.resume();
-
-      // Si el navegador se traba y no reanuda la voz, forzamos la lectura desde la palabra guardada
-      setTimeout(() => {
-        if (synth.paused) {
-          synth.cancel();
-          reproducirDesdePosicion(charIndexPausa);
-        }
-      }, 200);
-
+    // 2. Si estaba pausado -> Reanudar desde la posición guardada
+    if (estaPausado) {
+      estaPausado = false;
       restablecerBotonPausa(false);
-      return;
-    }
-
-    // 3. Si se detuvo tras la pausa pero guardó la posición previa
-    if (!synth.speaking && charIndexPausa > 0) {
-      reproducirDesdePosicion(charIndexPausa);
+      reproducirTexto(charIndexPausa);
     }
   });
 
@@ -239,7 +224,7 @@ function initPublicTTSControls() {
   });
 }
 
-function reproducirDesdePosicion(startCharIndex = 0) {
+function reproducirTexto(startCharIndex = 0) {
   const readerContent = document.getElementById('readerContent');
   if (!readerContent) return;
 
@@ -249,17 +234,15 @@ function reproducirDesdePosicion(startCharIndex = 0) {
     return;
   }
 
-  // Actualizar el diccionario desde localStorage
   diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
 
-  // Filtrar palabras ignoradas
   let textoProcesado = texto;
   diccionarioIgnorados.forEach(palabra => {
     const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
     textoProcesado = textoProcesado.replace(regex, '');
   });
 
-  // Recortar el texto para comenzar exactamente donde se pausó
+  // Si se reanuda, se corta el texto desde el índice de la pausa
   if (startCharIndex > 0 && startCharIndex < textoProcesado.length) {
     textoProcesado = textoProcesado.substring(startCharIndex);
   } else {
@@ -270,28 +253,29 @@ function reproducirDesdePosicion(startCharIndex = 0) {
   lecturaUtterance.lang = 'es-ES';
   lecturaUtterance.rate = 1.0;
 
-  // Registrar en tiempo real por qué palabra va leyendo
+  // Registrar la posición en caracteres conforme avance la lectura
   lecturaUtterance.onboundary = (event) => {
     if (event.name === 'word') {
       charIndexPausa = startCharIndex + event.charIndex;
     }
   };
 
-  // Al finalizar la narración completa
+  // Restablecer al finalizar la narración
   lecturaUtterance.onend = () => {
-    charIndexPausa = 0;
-    restablecerBotonPausa(false);
+    if (!estaPausado) {
+      charIndexPausa = 0;
+      restablecerBotonPausa(false);
+    }
   };
 
   synth.speak(lecturaUtterance);
-  restablecerBotonPausa(false);
 }
 
-function restablecerBotonPausa(estaPausado) {
+function restablecerBotonPausa(pausado) {
   const btnPause = document.getElementById('btnPausePublicTTS');
   if (!btnPause) return;
 
-  if (estaPausado) {
+  if (pausado) {
     btnPause.innerHTML = '<i class="bi bi-play-circle-fill"></i> Reanudar';
     btnPause.classList.remove('btn-outline-warning');
     btnPause.classList.add('btn-warning');
@@ -304,7 +288,8 @@ function restablecerBotonPausa(estaPausado) {
 
 function stopPublicReading() {
   charIndexPausa = 0;
-  if (synth && (synth.speaking || synth.paused)) {
+  estaPausado = false;
+  if (synth) {
     synth.cancel();
   }
   restablecerBotonPausa(false);
