@@ -332,48 +332,56 @@ function abrirModalEditar(id) {
   adminModalInstance.show();
 }
 
-// 6. Lógica para el Lector de Texto a Voz (TTS) y Diccionario de Ignorados
+// 6. Lógica simplificada para el Lector de Voz (TTS por selección) y Diccionario
 function configurarHerramientasVozYDiccionario() {
   const btnPlay = document.getElementById('btnPlayTTS');
-  const btnPause = document.getElementById('btnPauseTTS');
   const btnStop = document.getElementById('btnStopTTS');
   const btnIgnore = document.getElementById('btnIgnoreSelected');
 
-  // Bucle o reproducción del Lector
+  // BOTÓN LEER (Por selección o borrador completo)
   btnPlay?.addEventListener('click', () => {
-    if (synth.paused) {
-      synth.resume();
-      return;
-    }
-
+    // Si ya hay una lectura activa, la cancelamos para reiniciar con la selección actual
     if (synth.speaking) {
       synth.cancel();
     }
 
-    let texto = quillAdmin.getText().trim();
-    if (!texto) {
-      alert("No hay texto en el editor para leer.");
+    // Obtener la selección actual en Quill
+    const selection = quillAdmin.getSelection();
+    let textoALeer = "";
+
+    if (selection && selection.length > 0) {
+      // Lee ÚNICAMENTE el fragmento o párrafo seleccionado
+      textoALeer = quillAdmin.getText(selection.index, selection.length).trim();
+    } else {
+      // Si no hay selección, lee todo el borrador desde el inicio
+      textoALeer = quillAdmin.getText().trim();
+    }
+
+    if (!textoALeer) {
+      alert("No hay texto para leer.");
       return;
     }
 
-    lecturaUtterance = new SpeechSynthesisUtterance(texto);
+    // Limpieza con tu diccionario de palabras ignoradas
+    let textoProcesado = textoALeer;
+    diccionarioIgnorados.forEach(palabra => {
+      const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
+      textoProcesado = textoProcesado.replace(regex, ''); 
+    });
+
+    lecturaUtterance = new SpeechSynthesisUtterance(textoProcesado);
     lecturaUtterance.lang = 'es-ES';
-    lecturaUtterance.rate = 1.0; // Velocidad normal
+    lecturaUtterance.rate = 1.0;
 
     synth.speak(lecturaUtterance);
   });
 
-  btnPause?.addEventListener('click', () => {
-    if (synth.speaking && !synth.paused) {
-      synth.pause();
-    }
-  });
-
+  // BOTÓN DETENER
   btnStop?.addEventListener('click', () => {
     detenerLectura();
   });
 
-  // Agregar la palabra seleccionada al diccionario
+  // AGREGAR PALABRA IGNORADA
   btnIgnore?.addEventListener('click', () => {
     const range = quillAdmin.getSelection();
     if (range && range.length > 0) {

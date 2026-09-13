@@ -21,7 +21,7 @@
   <!-- Quill.js Editor CSS -->
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 
-  <!-- Ruta corregida a CSS desde Atributos/admin/ -->
+  <!-- Ruta CSS -->
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="dark-galaxy">
@@ -98,11 +98,8 @@
             <!-- Controles Texto a Voz (TTS) -->
             <div class="d-flex align-items-center gap-1">
               <span class="text-white-50 small me-1 font-artistic fs-6"><i class="bi bi-megaphone"></i> Escuchar:</span>
-              <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayTTS" title="Leer borrador en voz alta">
+              <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayTTS" title="Leer texto seleccionado o borrador completo">
                 <i class="bi bi-play-fill"></i> Leer
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-warning font-artistic" id="btnPauseTTS" title="Pausar lectura">
-                <i class="bi bi-pause-fill"></i> Pausa
               </button>
               <button type="button" class="btn btn-sm btn-outline-danger font-artistic" id="btnStopTTS" title="Detener lectura">
                 <i class="bi bi-stop-fill"></i> Detener
