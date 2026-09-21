@@ -93,25 +93,28 @@
           </div>
 
           <!-- BARRA DE HERRAMIENTAS ADICIONAL: LECTOR Y DICCIONARIO ANTI-RUIDO -->
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 p-2 rounded bg-black border border-secondary">
+          <div class="p-3 bg-dark border border-secondary rounded-3 my-2">
+            <label class="form-label text-light small mb-2 d-block text-center">
+              <i class="bi bi-headphones me-1 text-info"></i> Herramientas de Voz y Diccionario
+            </label>
             
-            <!-- Controles Texto a Voz (TTS) -->
-            <div class="d-flex align-items-center gap-1">
-              <span class="text-white-50 small me-1 font-artistic fs-6"><i class="bi bi-megaphone"></i> Escuchar:</span>
-              <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayTTS" title="Leer texto seleccionado o borrador completo">
-                <i class="bi bi-play-fill"></i> Leer
+            <!-- Fila de botones de reproducción compactos (Solo símbolos) -->
+            <div class="d-flex justify-content-center gap-2 mb-2">
+              <button id="btnPlayTTS" class="btn btn-success btn-sm px-4" title="Reproducir">
+                <i class="bi bi-play-fill fs-5"></i>
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger font-artistic" id="btnStopTTS" title="Detener lectura">
-                <i class="bi bi-stop-fill"></i> Detener
+              <button id="btnStopTTS" class="btn btn-outline-danger btn-sm px-4" title="Detener">
+                <i class="bi bi-stop-fill fs-5"></i>
               </button>
             </div>
 
-            <!-- Ignorador de Palabras Marcadas -->
+            <!-- Botón de diccionario abajo y abarcando todo el ancho para mayor comodidad táctil -->
             <div>
-              <button type="button" class="btn btn-sm btn-outline-info font-artistic" id="btnIgnoreSelected">
+              <button id="btnIgnoreSelected" class="btn btn-outline-info btn-sm w-100 font-artistic">
                 <i class="bi bi-eye-slash me-1"></i> Ignorar Selección
               </button>
             </div>
+          </div>
 
           </div>
 

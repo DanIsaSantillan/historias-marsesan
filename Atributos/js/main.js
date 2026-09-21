@@ -167,7 +167,7 @@ function renderGrid(stories) {
   });
 }
 
-/* --- ABRIR MODAL DE LECTURA --- */
+/* --- ABRIR MODAL DE LECTURA (Con protección de botón "Atrás" en móviles) --- */
 function openReaderModal(id) {
   const story = storiesData.find(s => s.id === id);
   if (!story) return;
@@ -181,8 +181,24 @@ function openReaderModal(id) {
   const readerModalElement = document.getElementById('readerModal');
   const modal = new bootstrap.Modal(readerModalElement);
   
+  // 1. Empujamos un estado al historial para interceptar el botón "Atrás" del celular
+  history.pushState({ modalOpen: true }, '', window.location.href);
+
+  const handlePopState = () => {
+    modal.hide();
+  };
+
+  window.addEventListener('popstate', handlePopState, { once: true });
+
+  // 2. Limpieza cuando el modal se cierra de cualquier forma (con la X, clic afuera o botón atrás)
   readerModalElement.addEventListener('hidden.bs.modal', () => {
     stopPublicReading();
+    window.removeEventListener('popstate', handlePopState);
+    
+    // Si todavía tenemos nuestro estado en el historial, damos un paso atrás para limpiarlo
+    if (history.state && history.state.modalOpen) {
+      history.back();
+    }
   }, { once: true });
 
   modal.show();
@@ -200,9 +216,8 @@ function initPublicTTSControls() {
     reproducirTexto(0);
   });
 
-  // BOTÓN PAUSA / REANUDAR (Alterna dinámicamente)
+  // BOTÓN PAUSA / REANUDAR (Alterna dinámicamente solo con íconos)
   btnPause?.addEventListener('click', () => {
-    // 1. Si está leyendo activamente -> Pausar y guardar posición
     if (synth.speaking && !estaPausado) {
       estaPausado = true;
       synth.cancel();
@@ -210,7 +225,6 @@ function initPublicTTSControls() {
       return;
     }
 
-    // 2. Si estaba pausado -> Reanudar desde la posición guardada
     if (estaPausado) {
       estaPausado = false;
       restablecerBotonPausa(false);
@@ -242,7 +256,6 @@ function reproducirTexto(startCharIndex = 0) {
     textoProcesado = textoProcesado.replace(regex, '');
   });
 
-  // Si se reanuda, se corta el texto desde el índice de la pausa
   if (startCharIndex > 0 && startCharIndex < textoProcesado.length) {
     textoProcesado = textoProcesado.substring(startCharIndex);
   } else {
@@ -253,14 +266,12 @@ function reproducirTexto(startCharIndex = 0) {
   lecturaUtterance.lang = 'es-ES';
   lecturaUtterance.rate = 1.0;
 
-  // Registrar la posición en caracteres conforme avance la lectura
   lecturaUtterance.onboundary = (event) => {
     if (event.name === 'word') {
       charIndexPausa = startCharIndex + event.charIndex;
     }
   };
 
-  // Restablecer al finalizar la narración
   lecturaUtterance.onend = () => {
     if (!estaPausado) {
       charIndexPausa = 0;
@@ -276,13 +287,17 @@ function restablecerBotonPausa(pausado) {
   if (!btnPause) return;
 
   if (pausado) {
-    btnPause.innerHTML = '<i class="bi bi-play-circle-fill"></i> Reanudar';
+    // Cambia al ícono de Play para indicar que puede reanudar
+    btnPause.innerHTML = '<i class="bi bi-play-fill fs-5"></i>';
     btnPause.classList.remove('btn-outline-warning');
     btnPause.classList.add('btn-warning');
+    btnPause.title = "Reanudar";
   } else {
-    btnPause.innerHTML = '<i class="bi bi-pause-fill"></i> Pausa';
+    // Vuelve al ícono de Pausa original
+    btnPause.innerHTML = '<i class="bi bi-pause-fill fs-5"></i>';
     btnPause.classList.remove('btn-warning');
     btnPause.classList.add('btn-outline-warning');
+    btnPause.title = "Pausa";
   }
 }
 

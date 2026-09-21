@@ -97,19 +97,21 @@
           </div>
 
           <!-- Controles de Texto a Voz (TTS) en vista pública -->
-          <div class="d-flex align-items-center gap-1 bg-black p-1 px-2 rounded border border-secondary ms-auto me-3">
-            <span class="text-white-50 small font-artistic me-1"><i class="bi bi-megaphone"></i> Escuchar:</span>
-            <button type="button" class="btn btn-sm btn-outline-success font-artistic" id="btnPlayPublicTTS" title="Leer capítulo en voz alta">
-              <i class="bi bi-play-fill"></i> Leer
+          <div class="tts-controls-container text-center my-3">
+            <span class="text-white-50 small me-2 d-none d-md-inline"><i class="bi bi-volume-up"></i> Reproductor:</span>
+            
+            <button id="btnPlayTTS" class="btn btn-success btn-sm px-3 rounded-pill mx-1" title="Leer / Reanudar">
+              <i class="bi bi-play-fill fs-5"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-warning font-artistic" id="btnPausePublicTTS" title="Pausar lectura">
-              <i class="bi bi-pause-fill"></i> Pausa
+            
+            <button id="btnPauseTTS" class="btn btn-outline-warning btn-sm px-3 rounded-pill mx-1" title="Pausa">
+              <i class="bi bi-pause-fill fs-5"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-danger font-artistic" id="btnStopPublicTTS" title="Detener lectura">
-              <i class="bi bi-stop-fill"></i> Detener
+            
+            <button id="btnStopTTS" class="btn btn-outline-danger btn-sm px-3 rounded-pill mx-1" title="Detener">
+              <i class="bi bi-stop-fill fs-5"></i>
             </button>
           </div>
-
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
@@ -126,5 +128,7 @@
 
   <!-- Lógica de Interacción JS -->
   <script type="module" src="Atributos/js/main.js"></script>
+  <link rel="manifest" href="Atributos/json/manifest.json">
+  <meta name="theme-color" content="#212529">
 </body>
 </html>

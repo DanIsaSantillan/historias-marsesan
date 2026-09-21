@@ -3,13 +3,13 @@
   "name": "Historias de MarseSan",
   "icons": [
     {
-      "src": "../Fondo y Perfil/Perfil.png",
-      "type": "image/jpeg",
+      "src": "../../FondoPerfil/Perfil.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
-  "start_url": "../../index.html",
+  "start_url": "/index.html",
   "background_color": "#ffffff",
   "theme_color": "#212529",
   "display": "standalone",
