@@ -248,13 +248,7 @@ function reproducirTexto(startCharIndex = 0) {
     return;
   }
 
-  diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
-
   let textoProcesado = texto;
-  diccionarioIgnorados.forEach(palabra => {
-    const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
-    textoProcesado = textoProcesado.replace(regex, '');
-  });
 
   if (startCharIndex > 0 && startCharIndex < textoProcesado.length) {
     textoProcesado = textoProcesado.substring(startCharIndex);

@@ -358,13 +358,7 @@ function configurarHerramientasVozYDiccionario() {
       return;
     }
 
-    diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
-
     let textoProcesado = textoALeer;
-    diccionarioIgnorados.forEach(palabra => {
-      const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
-      textoProcesado = textoProcesado.replace(regex, ''); 
-    });
 
     lecturaUtterance = new SpeechSynthesisUtterance(textoProcesado);
     lecturaUtterance.lang = 'es-ES';
