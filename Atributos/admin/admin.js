@@ -11,6 +11,8 @@ import {
   orderBy,
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const auth = getAuth(); 
 
 let historiasData = [];
 let universosLista = [];
@@ -22,12 +24,11 @@ let synth = window.speechSynthesis;
 let lecturaUtterance = null;
 let diccionarioIgnorados = JSON.parse(localStorage.getItem('marsesan_diccionario_ignorados')) || ["Latias", "Latios", "Amigurumi"];
 
-const STORAGE_KEY = 'marsesan_admin_token';
 
-// Validar Token de GitHub al cargar
+// Validar correo y contraseña al cargar
 document.addEventListener('DOMContentLoaded', async () => {
-  const tieneAcceso = await verificarAccesoToken();
-  if (!tieneAcceso) return; // Si falla el token, detiene la carga del panel
+  const tieneAcceso = await verificarAcceso();
+  if (!tieneAcceso) return; //verificacion de contraseña o correo fallida
 
   inicializarQuillAdmin();
   
@@ -46,39 +47,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   configurarHerramientasVozYDiccionario();
 });
 
-// Función para pedir y validar el Token de GitHub
-async function verificarAccesoToken() {
-  let token = localStorage.getItem(STORAGE_KEY);
+// Función para pedir y validar correo y contraseña
+function verificarAcceso() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('loginOverlay');
+    const form = document.getElementById('loginForm');
+    const errorBox = document.getElementById('loginError');
 
-  if (!token) {
-    token = prompt("🔒 Acceso Privado MarseSan\nPor favor ingresa tu Token de GitHub activo:");
-    if (!token) {
-      alert("Acceso denegado.");
-      window.location.href = "../../index.html";
-      return false;
-    }
-  }
-
-  try {
-    const response = await fetch('https://api.github.com/user', {
-      headers: { 'Authorization': `token ${token}` }
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        overlay.classList.add('d-none');
+        resolve(true);
+      } else {
+        overlay.classList.remove('d-none');
+      }
     });
 
-    if (response.ok) {
-      localStorage.setItem(STORAGE_KEY, token);
-      return true;
-    } else {
-      alert("El Token de GitHub es inválido o ha expirado.");
-      localStorage.removeItem(STORAGE_KEY);
-      window.location.href = "../../index.html";
-      return false;
-    }
-  } catch (error) {
-    console.error("Error al verificar el token:", error);
-    alert("Error de conexión al validar el token.");
-    window.location.href = "../../index.html";
-    return false;
-  }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.textContent = '';
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error(error.code);
+        errorBox.textContent = 'Correo o contraseña incorrectos.';
+      }
+    });
+  });
 }
 
 // 1. Inicializar el editor Quill con filtro de pegado (Sin imágenes)

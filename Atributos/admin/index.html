@@ -26,6 +26,16 @@
 </head>
 <body class="dark-galaxy">
 
+  <div id="loginOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-black" style="z-index: 2000;">
+    <form id="loginForm" class="p-4 border border-secondary rounded-3 bg-dark" style="max-width: 360px; width: 90%;">
+      <h5 class="font-artistic fs-3 text-white mb-3">🔒 Acceso privado</h5>
+      <input type="email" id="loginEmail" class="form-control bg-black text-white border-secondary mb-2" placeholder="Correo" required autocomplete="username">
+      <input type="password" id="loginPassword" class="form-control bg-black text-white border-secondary mb-2" placeholder="Contraseña" required autocomplete="current-password">
+      <p id="loginError" class="text-danger small mb-2"></p>
+      <button type="submit" class="btn btn-light w-100 font-artistic fw-bold">Entrar</button>
+    </form>
+  </div>
+
   <!-- Navegación Superior con fondo de Galaxia -->
   <nav class="navbar navbar-expand-lg border-bottom galaxy">
     <div class="container-fluid px-4">
@@ -92,10 +102,10 @@
             </div>
           </div>
 
-          <!-- BARRA DE HERRAMIENTAS ADICIONAL: LECTOR Y DICCIONARIO ANTI-RUIDO -->
+          <!-- BARRA DE HERRAMIENTAS ADICIONAL: LECTOR  -->
           <div class="p-3 bg-dark border border-secondary rounded-3 my-2">
             <label class="form-label text-light small mb-2 d-block text-center">
-              <i class="bi bi-headphones me-1 text-info"></i> Herramientas de Voz y Diccionario
+              <i class="bi bi-headphones me-1 text-info"></i> Herramientas de Voz
             </label>
             
             <!-- Fila de botones de reproducción compactos (Solo símbolos) -->
@@ -107,6 +117,7 @@
                 <i class="bi bi-stop-fill fs-5"></i>
               </button>
             </div>
+          </div>
 
           <!-- Editor de Texto Quill -->
           <div class="mb-2">
